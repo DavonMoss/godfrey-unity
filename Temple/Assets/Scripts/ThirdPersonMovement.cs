@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Cinemachine;
 
 public class ThirdPersonMovement : MonoBehaviour
 {
@@ -10,27 +11,34 @@ public class ThirdPersonMovement : MonoBehaviour
     public Transform cam;
 
     public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime;
-    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange;
-    public Transform attackPoint;
+    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance;
+    public Transform attackPoint, groundPoundPoint;
     public LayerMask enemyLayers;
 
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
-    private bool moveEnabled, chain;
+    private bool moveEnabled, chain, targeting;
 
     public float gravity;
 
+    public GameObject ctg_script_obj;
+    private CinemachineTargetGroup targetGroup;
+    private EnemyManager enemyManager;
+    private Transform targetedEnemy;
 
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+        targetGroup = ctg_script_obj.GetComponent<CinemachineTargetGroup>();
+        enemyManager = ctg_script_obj.GetComponent<EnemyManager>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        lockOn();
         attack1();
         jump();
         blink();
@@ -66,6 +74,35 @@ public class ThirdPersonMovement : MonoBehaviour
         {
             transform.rotation = Quaternion.Euler(0, angle, 0);
             anim.SetBool("run", false);
+        }
+    }
+
+    private void lockOn()
+    {
+        float enemyDistance = 0;
+
+        if (Input.GetKeyDown(KeyCode.Tab) && targeting == false)
+        {
+            targetedEnemy = enemyManager.enemiesInSight[0].transform;
+            targetGroup.AddMember(targetedEnemy, 1, 1);
+            targeting = true;
+        }
+
+        if (targetedEnemy == null)
+        {
+            targeting = false;
+        }
+
+        if (targeting)
+        {
+            Vector3 distCoords = transform.position - targetedEnemy.position;
+            enemyDistance = Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2));
+
+            if (enemyDistance > lockOnDistance)
+            {
+                targetGroup.RemoveMember(targetedEnemy);
+                targeting = false;
+            }
         }
     }
 
@@ -162,6 +199,12 @@ public class ThirdPersonMovement : MonoBehaviour
     public void attack1return()
     {
         moveEnabled = true;
+
+        if (numAttacks >= 2)
+        {
+            moveEnabled = false;
+            anim.SetBool("attack2", true);
+        }
     }
 
     public void endAttack2()
@@ -186,9 +229,21 @@ public class ThirdPersonMovement : MonoBehaviour
         }
     }
 
+    private void activateGroundPound()
+    {
+        Collider[] hitEnemies = Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers);
+        Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers)).ToArray();
+
+        foreach (Collider enemy in allEnemies)
+        {
+            enemy.GetComponent<EnemyScript>().takeDamage(attackDamage);
+        }
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.DrawSphere(attackPoint.position, attackRange);
+        Gizmos.DrawSphere(groundPoundPoint.position, groundPoundRange);
     }
 
     public void takeDamage(float dmg)

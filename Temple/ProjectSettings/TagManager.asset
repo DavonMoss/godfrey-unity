@@ -8,6 +8,7 @@ TagManager:
   - Maria
   - Boar
   - Godfrey
+  - EnemyManager
   layers:
   - Default
   - TransparentFX
@@ -26,7 +27,7 @@ TagManager:
   - AndreasVulnerable
   - MariaVulnerable
   - EvilArrows
-  - 
+  - EnemyManager
   - 
   - 
   - 

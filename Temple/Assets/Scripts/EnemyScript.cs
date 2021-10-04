@@ -15,12 +15,18 @@ public class EnemyScript : MonoBehaviour
     [SerializeField] protected Transform attackPoint;
     [SerializeField] protected LayerMask playerLayers;
 
+    public GameObject ctg_script_obj;
+    private EnemyManager enemyManager;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
         currentHealth = maxHealth;
 
         playerPos = GameObject.FindGameObjectWithTag("Godfrey").transform;
+
+        ctg_script_obj = GameObject.FindGameObjectWithTag("EnemyManager");
+        enemyManager = ctg_script_obj.GetComponent<EnemyManager>();
     }
 
     // Update is called once per frame
@@ -128,8 +134,18 @@ public class EnemyScript : MonoBehaviour
         anim.SetBool("attack", false);
     }
 
-    private void OnDrawGizmos()
+    void OnDrawGizmos()
     {
         Gizmos.DrawSphere(attackPoint.position, attackRange);
+    }
+
+    public void OnBecameVisible()
+    {
+        enemyManager.enemiesInSight.Add(gameObject);
+    }
+
+    public void OnBecameInvisible()
+    {
+        enemyManager.enemiesInSight.Remove(gameObject);
     }
 }
