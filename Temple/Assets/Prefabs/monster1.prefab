@@ -1880,7 +1880,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 054576dc5ade04a75b600c2bb1a8d1c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 1
+  maxHealth: 3
   detectionRange: 10
   moveSpeed: 2
   attackTriggerRange: 1.3
@@ -1896,6 +1896,7 @@ MonoBehaviour:
   playerLayers:
     serializedVersion: 2
     m_Bits: 4096
+  ctg_script_obj: {fileID: 0}
 --- !u!137 &1342867175
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0

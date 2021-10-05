@@ -49,7 +49,14 @@ public class EnemyScript : MonoBehaviour
 
     public void takeDamage(float dmg)
     {
+        anim.SetTrigger("hit");
+        canMove = false;
         currentHealth -= dmg;
+    }
+
+    public void hitStunReturn()
+    {
+        canMove = true;
     }
 
     protected virtual void kill()
@@ -141,7 +148,7 @@ public class EnemyScript : MonoBehaviour
 
     public void OnBecameVisible()
     {
-        enemyManager.enemiesInSight.Add(gameObject);
+        enemyManager.enemiesInSight.Insert(0, gameObject);
     }
 
     public void OnBecameInvisible()

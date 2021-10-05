@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Cinemachine;
+using UnityEngine.InputSystem;
 
 public class ThirdPersonMovement : MonoBehaviour
 {
@@ -11,14 +12,15 @@ public class ThirdPersonMovement : MonoBehaviour
     public Transform cam;
 
     public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime;
-    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance;
+    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed;
     public Transform attackPoint, groundPoundPoint;
     public LayerMask enemyLayers;
+    public int playerLayer, enemyLayerInt;
 
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
-    private bool moveEnabled, chain, targeting;
+    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false;
 
     public float gravity;
 
@@ -27,27 +29,26 @@ public class ThirdPersonMovement : MonoBehaviour
     private EnemyManager enemyManager;
     private Transform targetedEnemy;
 
+    private PlayerInput playerInput;
+
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         targetGroup = ctg_script_obj.GetComponent<CinemachineTargetGroup>();
         enemyManager = ctg_script_obj.GetComponent<EnemyManager>();
+        playerInput = GetComponent<PlayerInput>();
     }
 
     // Update is called once per frame
     void Update()
     {
         lockOn();
-        attack1();
-        jump();
-        blink();
         applyGravity();
-
-        //if (moveEnabled)
         move();
     }
 
+    // INPUT METHODS
     private void move()
     {
         float horizontal = Input.GetAxisRaw("Horizontal");
@@ -77,15 +78,95 @@ public class ThirdPersonMovement : MonoBehaviour
         }
     }
 
+    public void blink(InputAction.CallbackContext value)
+    {
+        if (value.started)
+            controller.Move(moveDir * blinkDist);
+    }
+
+    public void lockOnInput(InputAction.CallbackContext value)
+    {
+        if (value.started)
+        {
+            triggerLockOn = true;
+        }
+        else if (value.canceled)
+        {
+            triggerLockOn = false;
+        }
+    }
+
+    public void jump(InputAction.CallbackContext value)
+    {
+        if (value.started && controller.isGrounded)
+        {
+            y_movedir.y = jumpSpeed;
+            anim.SetTrigger("jump");
+        }
+    }
+
+    public void attack1(InputAction.CallbackContext value)
+    {
+        if (Time.time - lastClickTime > nextAttackWindow)
+        {
+            numAttacks = 0;
+        }
+
+        if (value.started)
+        {
+            lastClickTime = Time.time;
+            numAttacks++;
+
+            if (numAttacks == 1)
+            {
+                moveEnabled = false;
+
+                if (anim.GetBool("grounded"))
+                {
+                    anim.SetBool("attack1", true);
+                }
+                else
+                {
+                    anim.SetBool("air_attack", true);
+                    gravity *= groundPoundSpeed;
+                }
+
+            }
+            else if (numAttacks == 2 && chain)
+            {
+                moveEnabled = false;
+                anim.SetBool("attack2", true);
+                chain = false;
+            }
+
+            numAttacks = Mathf.Clamp(numAttacks, 0, 2);
+        }
+    }
+
+    // HELPER METHODS
     private void lockOn()
     {
         float enemyDistance = 0;
+        List<float> enemyDistances = new List<float>();
 
-        if (Input.GetKeyDown(KeyCode.Tab) && targeting == false)
+        if (!targeting && enemyManager.enemiesInSight.Count > 0)
         {
-            targetedEnemy = enemyManager.enemiesInSight[0].transform;
-            targetGroup.AddMember(targetedEnemy, 1, 1);
-            targeting = true;
+            foreach (GameObject enemy in enemyManager.enemiesInSight)
+            {
+                Vector3 distCoords = transform.position - enemy.transform.position;
+                enemyDistances.Add(Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2)));
+            }
+
+            if (triggerLockOn)
+            {
+                int minDistIdx = enemyDistances.IndexOf(enemyDistances.Min());
+
+                targetedEnemy = enemyManager.enemiesInSight[minDistIdx].transform;
+                targetGroup.AddMember(targetedEnemy, 1, 1);
+                targeting = true;
+                triggerLockOn = false;
+                return;
+            }
         }
 
         if (targetedEnemy == null)
@@ -95,6 +176,14 @@ public class ThirdPersonMovement : MonoBehaviour
 
         if (targeting)
         {
+            if (triggerLockOn)
+            {
+                targetGroup.RemoveMember(targetedEnemy);
+                targeting = false;
+                triggerLockOn = false;
+                return;
+            }
+
             Vector3 distCoords = transform.position - targetedEnemy.position;
             enemyDistance = Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2));
 
@@ -106,13 +195,6 @@ public class ThirdPersonMovement : MonoBehaviour
         }
     }
 
-    private void blink()
-    {
-        if (Input.GetKeyDown(KeyCode.E))
-            controller.Move(moveDir * blinkDist);
-    }
-
-    // gravity
     private void applyGravity()
     {
         y_movedir.y -= gravity * Time.deltaTime;
@@ -120,23 +202,15 @@ public class ThirdPersonMovement : MonoBehaviour
         if (!controller.isGrounded)
         {
             anim.SetBool("grounded", false);
+            Physics.IgnoreLayerCollision(playerLayer, enemyLayerInt, true);
         }
         else
         {
             anim.SetBool("grounded", true);
+            Physics.IgnoreLayerCollision(playerLayer, enemyLayerInt, false);
         }
 
         controller.Move(y_movedir * Time.deltaTime);
-    }
-
-    //jump
-    private void jump()
-    {
-        if (controller.isGrounded && Input.GetKeyDown(KeyCode.Space))
-        {
-            y_movedir.y = jumpSpeed;
-            anim.SetTrigger("jump");
-        }
     }
 
     public void disableMovement()
@@ -148,41 +222,13 @@ public class ThirdPersonMovement : MonoBehaviour
     {
         moveEnabled = true;
     }
-
-    //attack 1
-    private void attack1()
-    {
-        if (Time.time - lastClickTime > nextAttackWindow)
-        {
-            numAttacks = 0;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            lastClickTime = Time.time;
-            numAttacks++;
-
-            if (numAttacks == 1)
-            {
-                if (anim.GetBool("grounded"))
-                {
-                    moveEnabled = false;
-                    anim.SetBool("attack1", true);
-                }
-                else
-                {
-                    anim.SetBool("air_attack", true);
-                }
-                
-            }
-
-            numAttacks = Mathf.Clamp(numAttacks, 0, 2);
-        }
-    }
-
+    
     public void midairAttackReturn()
     {
         anim.SetBool("air_attack", false);
+        gravity /= groundPoundSpeed;
+        moveEnabled = true;
+        numAttacks = 0;
     }
 
     public void endAttack1()
@@ -194,17 +240,16 @@ public class ThirdPersonMovement : MonoBehaviour
             moveEnabled = false;
             anim.SetBool("attack2", true);
         }
+        else
+        {
+            chain = true;
+        }
     }
 
     public void attack1return()
     {
         moveEnabled = true;
-
-        if (numAttacks >= 2)
-        {
-            moveEnabled = false;
-            anim.SetBool("attack2", true);
-        }
+        chain = false;
     }
 
     public void endAttack2()
@@ -221,9 +266,9 @@ public class ThirdPersonMovement : MonoBehaviour
     private void activateAttack()
     {
         Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
-        Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers)).ToArray();
+        //Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers)).ToArray();
 
-        foreach (Collider enemy in allEnemies)
+        foreach (Collider enemy in hitEnemies)
         {
             enemy.GetComponent<EnemyScript>().takeDamage(attackDamage);
         }
@@ -232,9 +277,9 @@ public class ThirdPersonMovement : MonoBehaviour
     private void activateGroundPound()
     {
         Collider[] hitEnemies = Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers);
-        Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers)).ToArray();
+        //Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers)).ToArray();
 
-        foreach (Collider enemy in allEnemies)
+        foreach (Collider enemy in hitEnemies)
         {
             enemy.GetComponent<EnemyScript>().takeDamage(attackDamage);
         }
@@ -248,6 +293,13 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public void takeDamage(float dmg)
     {
+        anim.SetTrigger("hit");
+        moveEnabled = false;
         Debug.LogFormat("Took {0} Damage!", dmg);
+    }
+
+    public void hitStunReturn()
+    {
+        moveEnabled = true;
     }
 }
