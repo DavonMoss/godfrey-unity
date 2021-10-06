@@ -12,7 +12,7 @@ public class ThirdPersonMovement : MonoBehaviour
     public Transform cam;
 
     public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime;
-    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed;
+    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed, baseGravity;
     public Transform attackPoint, groundPoundPoint;
     public LayerMask enemyLayers;
     public int playerLayer, enemyLayerInt;
@@ -20,9 +20,9 @@ public class ThirdPersonMovement : MonoBehaviour
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
-    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false;
+    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false, inRecovery = false;
 
-    public float gravity;
+    private float gravity;
 
     public GameObject ctg_script_obj;
     private CinemachineTargetGroup targetGroup;
@@ -38,6 +38,7 @@ public class ThirdPersonMovement : MonoBehaviour
         targetGroup = ctg_script_obj.GetComponent<CinemachineTargetGroup>();
         enemyManager = ctg_script_obj.GetComponent<EnemyManager>();
         playerInput = GetComponent<PlayerInput>();
+        gravity = baseGravity;
     }
 
     // Update is called once per frame
@@ -98,10 +99,15 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public void jump(InputAction.CallbackContext value)
     {
-        if (value.started && controller.isGrounded)
+        if (value.started &&
+            controller.isGrounded &&
+            !inRecovery &&
+            !anim.GetBool("attack1") &&
+            !anim.GetBool("attack2") &&
+            !anim.GetBool("air_attack"))
         {
-            y_movedir.y = jumpSpeed;
             anim.SetTrigger("jump");
+            y_movedir.y = jumpSpeed;
         }
     }
 
@@ -128,7 +134,7 @@ public class ThirdPersonMovement : MonoBehaviour
                 else
                 {
                     anim.SetBool("air_attack", true);
-                    gravity *= groundPoundSpeed;
+                    gravity = groundPoundSpeed;
                 }
 
             }
@@ -226,8 +232,9 @@ public class ThirdPersonMovement : MonoBehaviour
     public void midairAttackReturn()
     {
         anim.SetBool("air_attack", false);
-        gravity /= groundPoundSpeed;
+        gravity = baseGravity;
         moveEnabled = true;
+        inRecovery = false;
         numAttacks = 0;
     }
 
@@ -242,6 +249,7 @@ public class ThirdPersonMovement : MonoBehaviour
         }
         else
         {
+            inRecovery = true;
             chain = true;
         }
     }
@@ -249,17 +257,20 @@ public class ThirdPersonMovement : MonoBehaviour
     public void attack1return()
     {
         moveEnabled = true;
+        inRecovery = false;
         chain = false;
     }
 
     public void endAttack2()
     {
         anim.SetBool("attack2", false);
+        inRecovery = true;
     }
 
     public void attack2return()
     {
         moveEnabled = true;
+        inRecovery = false;
         numAttacks = 0;
     }
 
@@ -283,6 +294,8 @@ public class ThirdPersonMovement : MonoBehaviour
         {
             enemy.GetComponent<EnemyScript>().takeDamage(attackDamage);
         }
+
+        inRecovery = true;
     }
 
     private void OnDrawGizmos()
