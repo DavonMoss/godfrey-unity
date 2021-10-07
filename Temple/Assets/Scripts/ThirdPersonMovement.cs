@@ -12,7 +12,7 @@ public class ThirdPersonMovement : MonoBehaviour
     public Transform cam;
 
     public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime;
-    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed, baseGravity;
+    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed, baseGravity, critMultiplier;
     public Transform attackPoint, groundPoundPoint;
     public LayerMask enemyLayers;
     public int playerLayer, enemyLayerInt;
@@ -20,7 +20,7 @@ public class ThirdPersonMovement : MonoBehaviour
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
-    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false, inRecovery = false;
+    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false, inRecovery = false, crit = false;
 
     private float gravity;
 
@@ -30,6 +30,7 @@ public class ThirdPersonMovement : MonoBehaviour
     private Transform targetedEnemy;
 
     private PlayerInput playerInput;
+    public ParticleSystem slash_1, slash_crit;
 
     // Start is called before the first frame update
     void Start()
@@ -78,7 +79,7 @@ public class ThirdPersonMovement : MonoBehaviour
             anim.SetBool("run", false);
         }
     }
-
+    
     public void blink(InputAction.CallbackContext value)
     {
         if (value.started)
@@ -136,12 +137,12 @@ public class ThirdPersonMovement : MonoBehaviour
                     anim.SetBool("air_attack", true);
                     gravity = groundPoundSpeed;
                 }
-
             }
             else if (numAttacks == 2 && chain)
             {
                 moveEnabled = false;
                 anim.SetBool("attack2", true);
+                slash_1.Clear();
                 chain = false;
             }
 
@@ -238,13 +239,30 @@ public class ThirdPersonMovement : MonoBehaviour
         numAttacks = 0;
     }
 
+    // for emitting the slash at a specific frame
+    public void emitSlash1()
+    {
+        if (crit)
+        {
+            slash_crit.Emit(1);
+        }
+        else
+        {
+            slash_1.Emit(1);
+        }
+    }
+
     public void endAttack1()
     {
         anim.SetBool("attack1", false);
 
+        // this is the crit check
         if (numAttacks >= 2)
         {
             moveEnabled = false;
+            slash_1.Clear();
+            crit = true;
+            anim.SetFloat("attack_speed", 3.0f);
             anim.SetBool("attack2", true);
         }
         else
@@ -269,8 +287,10 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public void attack2return()
     {
+        anim.SetFloat("attack_speed", 1.0f);
         moveEnabled = true;
         inRecovery = false;
+        crit = false;
         numAttacks = 0;
     }
 
@@ -281,7 +301,14 @@ public class ThirdPersonMovement : MonoBehaviour
 
         foreach (Collider enemy in hitEnemies)
         {
-            enemy.GetComponent<EnemyScript>().takeDamage(attackDamage);
+            float dmg = attackDamage;
+
+            if (crit)
+            {
+                dmg *= critMultiplier;
+            }
+
+            enemy.GetComponent<EnemyScript>().takeDamage(dmg);
         }
     }
 
@@ -313,6 +340,18 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public void hitStunReturn()
     {
+        // resetting for clean idle
         moveEnabled = true;
+        chain = false;
+        triggerLockOn = false;
+        inRecovery = false;
+        crit = false;
+
+        // resetting anim fields
+        anim.ResetTrigger("hit");
+        anim.ResetTrigger("jump");
+        anim.SetBool("attack1", false);
+        anim.SetBool("attack2", false);
+        anim.SetBool("air_attack", false);
     }
 }
