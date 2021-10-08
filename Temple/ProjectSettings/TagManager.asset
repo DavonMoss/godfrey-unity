@@ -9,6 +9,7 @@ TagManager:
   - Boar
   - Godfrey
   - EnemyManager
+  - Enemy
   layers:
   - Default
   - TransparentFX

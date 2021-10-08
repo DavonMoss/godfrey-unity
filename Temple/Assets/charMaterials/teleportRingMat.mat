@@ -7,32 +7,38 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: grass
-  m_Shader: {fileID: -6465566751694194690, guid: 5e663080963c44197997f3b2b8679b43, type: 3}
-  m_ShaderKeywords: MAIN_LIGHT_CALCULATE_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
+  m_Name: teleportRingMat
+  m_Shader: {fileID: 4800000, guid: 0406db5a14f94604a8c57ccfbc9f3b46, type: 3}
+  m_ShaderKeywords: _ALPHATEST_ON _COLORADDSUBDIFF_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
+  m_DoubleSidedGI: 1
+  m_CustomRenderQueue: 3000
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses:
+  - SHADOWCASTER
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - Texture2D_058e7d7c5d5c45bb8166278f55e2ea4b:
-        m_Texture: {fileID: 2800000, guid: 86c336d6f2bad4e82a42dedbe9c421ab, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2afe49ef2e9994fae9cd7012169a975d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_80177668bd0d4762870dd778fa87d6dc:
-        m_Texture: {fileID: 2800000, guid: 943ed242188c74aa7a6ac1b403ce99ee, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2afe49ef2e9994fae9cd7012169a975d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - Texture2D_bd5751c2f6614a088176a05ab03d7f6d:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _BaseMap:
+    - _AlphaTex:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 2afe49ef2e9994fae9cd7012169a975d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -88,50 +94,70 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - PixelSnap: 0
     - Vector1_28fb673bf5e847a7953cc1fc7f755197: 0
     - Vector1_3740e9bf9b114da38351f052de024286: 0
     - Vector1_c168c1aea0004ed79ca8c5fb65818f31: 0
-    - _AlphaClip: 0
+    - Vector1_f1958bb67f504a44856d63e133b57af1: 0
+    - _AlphaClip: 1
     - _Blend: 0
+    - _BlendOp: 0
     - _BumpScale: 1
+    - _CameraFadingEnabled: 0
+    - _CameraFarFadeDistance: 2
+    - _CameraNearFadeDistance: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
+    - _ColorMode: 1
+    - _Cull: 0
+    - _Cutoff: 1
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DstBlend: 0
+    - _DistortionBlend: 0.5
+    - _DistortionEnabled: 0
+    - _DistortionStrength: 1
+    - _DistortionStrengthScaled: 0.1
+    - _DstBlend: 10
+    - _EnableExternalAlpha: 0
     - _EnvironmentReflections: 1
+    - _FlipbookBlending: 0
+    - _FlipbookMode: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
-    - _GlossinessSource: 0
     - _GlossyReflections: 0
     - _Metallic: 0
+    - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Shininess: 0
     - _Smoothness: 0.5
-    - _SmoothnessSource: 0
     - _SmoothnessTextureChannel: 0
-    - _SpecSource: 0
+    - _SoftParticlesEnabled: 0
+    - _SoftParticlesFarFadeDistance: 1
+    - _SoftParticlesNearFadeDistance: 0
     - _SpecularHighlights: 1
-    - _SrcBlend: 1
-    - _Surface: 0
+    - _SrcBlend: 5
+    - _Surface: 1
     - _WorkflowMode: 1
-    - _ZWrite: 1
+    - _ZWrite: 0
     m_Colors:
-    - Color_9b7c80fc8ac744c5bca2ab953a0fc966: {r: 0.8301887, g: 0.82530147, b: 0.56781775, a: 0}
+    - Color_7d70baf2984945f2888ba671b29dbb52: {r: 1, g: 1, b: 1, a: 0}
+    - Color_9b7c80fc8ac744c5bca2ab953a0fc966: {r: 0.7075472, g: 0.33041117, b: 0.33041117, a: 0}
     - Vector2_62dbcc2d22df4d428156a5f35b8980ff: {r: 0, g: 0, b: 0, a: 0}
     - Vector2_6f1aef450ee2434f8eaaee8a6db80cb6: {r: 0, g: 0, b: 0, a: 0}
     - Vector2_7e6a57963478471598bcd81ce1dd1d4a: {r: 0, g: 0, b: 0, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColorAddSubDiff: {r: 1, g: 0, b: 0, a: 0}
+    - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
---- !u!114 &7091237695236670054
+--- !u!114 &3766578490279485239
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

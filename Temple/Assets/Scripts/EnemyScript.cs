@@ -49,6 +49,7 @@ public class EnemyScript : MonoBehaviour
 
     public void takeDamage(float dmg)
     {
+        Debug.Log("OUCHIE");
         anim.SetTrigger("hit");
         canMove = false;
         currentHealth -= dmg;
@@ -62,7 +63,7 @@ public class EnemyScript : MonoBehaviour
     protected virtual void kill()
     {
         if (currentHealth <= 0)
-        {
+        { 
             GameObject.Destroy(gameObject);
         }
     }

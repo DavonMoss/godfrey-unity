@@ -20,7 +20,14 @@ public class ThirdPersonMovement : MonoBehaviour
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
-    private bool moveEnabled = true, chain = false, targeting = false, triggerLockOn = false, inRecovery = false, crit = false;
+
+    private bool moveEnabled = true,
+                    chain = false,
+                    targeting = false,
+                    triggerLockOn = false,
+                    inRecovery = false,
+                    crit = false,
+                    attackActive = false;
 
     private float gravity;
 
@@ -31,6 +38,10 @@ public class ThirdPersonMovement : MonoBehaviour
 
     private PlayerInput playerInput;
     public ParticleSystem slash_1, slash_crit;
+    public ParticleSystem teleport_hor_outer, teleport_hor_inner, teleport_billboard;
+    public ParticleSystem runningDust;
+    public GameObject targetUI;
+    private GameObject targetUIInstance;
 
     // Start is called before the first frame update
     void Start()
@@ -48,6 +59,7 @@ public class ThirdPersonMovement : MonoBehaviour
         lockOn();
         applyGravity();
         move();
+        activateDust();
     }
 
     // INPUT METHODS
@@ -61,7 +73,17 @@ public class ThirdPersonMovement : MonoBehaviour
         {
             float targetAngle = Mathf.Atan2(velocity.x, velocity.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
             angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0, angle, leanDegrees * -velocity.x);
+
+            if (targeting)
+            {
+                Vector3 enemyDir = targetedEnemy.position - transform.position;
+                Vector3 lookDir = Vector3.RotateTowards(transform.forward, enemyDir, turnSmoothTime, 0.0f);
+                transform.rotation = Quaternion.LookRotation(lookDir);
+            }
+            else
+            {
+                transform.rotation = Quaternion.Euler(0, angle, leanDegrees * -velocity.x);
+            }
 
             moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             Vector3 xz_movedir = moveDir.normalized * speed * Time.deltaTime;
@@ -83,7 +105,15 @@ public class ThirdPersonMovement : MonoBehaviour
     public void blink(InputAction.CallbackContext value)
     {
         if (value.started)
+        {
+            teleport_hor_inner.Clear();
+            teleport_hor_outer.Clear();
+            teleport_billboard.Clear();
+            teleport_hor_inner.Play();
+            teleport_hor_outer.Play();
+            teleport_billboard.Play();
             controller.Move(moveDir * blinkDist);
+        }
     }
 
     public void lockOnInput(InputAction.CallbackContext value)
@@ -151,6 +181,21 @@ public class ThirdPersonMovement : MonoBehaviour
     }
 
     // HELPER METHODS
+    private void activateDust()
+    {
+        if (anim.GetBool("run") == true &&
+            controller.isGrounded &&
+            moveEnabled)
+        {
+            runningDust.Play();
+        }
+        else
+        {
+            runningDust.Stop();
+            runningDust.Clear();
+        }
+    }
+
     private void lockOn()
     {
         float enemyDistance = 0;
@@ -172,6 +217,7 @@ public class ThirdPersonMovement : MonoBehaviour
                 targetGroup.AddMember(targetedEnemy, 1, 1);
                 targeting = true;
                 triggerLockOn = false;
+                applyLockOnUI(targetedEnemy.transform);
                 return;
             }
         }
@@ -179,6 +225,7 @@ public class ThirdPersonMovement : MonoBehaviour
         if (targetedEnemy == null)
         {
             targeting = false;
+            applyLockOnUI(null);
         }
 
         if (targeting)
@@ -188,6 +235,7 @@ public class ThirdPersonMovement : MonoBehaviour
                 targetGroup.RemoveMember(targetedEnemy);
                 targeting = false;
                 triggerLockOn = false;
+                applyLockOnUI(null);
                 return;
             }
 
@@ -197,8 +245,22 @@ public class ThirdPersonMovement : MonoBehaviour
             if (enemyDistance > lockOnDistance)
             {
                 targetGroup.RemoveMember(targetedEnemy);
+                applyLockOnUI(null);
                 targeting = false;
             }
+        }
+    }
+
+    private void applyLockOnUI(Transform parent)
+    {
+        if (parent != null)
+        {
+            targetUIInstance = GameObject.Instantiate(targetUI);
+            targetUIInstance.transform.SetParent(parent, false);
+        }
+        else
+        {
+            GameObject.Destroy(targetUIInstance);
         }
     }
 
@@ -255,6 +317,7 @@ public class ThirdPersonMovement : MonoBehaviour
     public void endAttack1()
     {
         anim.SetBool("attack1", false);
+        attackWindowClose();
 
         // this is the crit check
         if (numAttacks >= 2)
@@ -262,7 +325,7 @@ public class ThirdPersonMovement : MonoBehaviour
             moveEnabled = false;
             slash_1.Clear();
             crit = true;
-            anim.SetFloat("attack_speed", 3.0f);
+            //anim.SetFloat("attack_speed", 3.0f);
             anim.SetBool("attack2", true);
         }
         else
@@ -282,6 +345,7 @@ public class ThirdPersonMovement : MonoBehaviour
     public void endAttack2()
     {
         anim.SetBool("attack2", false);
+        attackWindowClose();
         inRecovery = true;
     }
 
@@ -294,28 +358,33 @@ public class ThirdPersonMovement : MonoBehaviour
         numAttacks = 0;
     }
 
-    private void activateAttack()
+    public void attackHit(Collider enemy)
     {
-        Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers);
-        //Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayers)).ToArray();
-
-        foreach (Collider enemy in hitEnemies)
+        if (enemy != null && attackActive)
         {
             float dmg = attackDamage;
 
             if (crit)
-            {
                 dmg *= critMultiplier;
-            }
 
             enemy.GetComponent<EnemyScript>().takeDamage(dmg);
         }
     }
 
+    public void attackWindowOpen()
+    {
+        attackActive = true;
+        emitSlash1();
+    }
+
+    public void attackWindowClose()
+    {
+        attackActive = false;
+    }
+
     private void activateGroundPound()
     {
         Collider[] hitEnemies = Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers);
-        //Collider[] allEnemies = hitEnemies.Concat(Physics.OverlapSphere(groundPoundPoint.position, groundPoundRange, enemyLayers)).ToArray();
 
         foreach (Collider enemy in hitEnemies)
         {
@@ -327,8 +396,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.DrawSphere(attackPoint.position, attackRange);
-        Gizmos.DrawSphere(groundPoundPoint.position, groundPoundRange);
+        //Gizmos.DrawSphere(attackPoint.position, attackRange);
+        //Gizmos.DrawSphere(groundPoundPoint.position, groundPoundRange);
     }
 
     public void takeDamage(float dmg)
@@ -346,6 +415,7 @@ public class ThirdPersonMovement : MonoBehaviour
         triggerLockOn = false;
         inRecovery = false;
         crit = false;
+        attackActive = false;
 
         // resetting anim fields
         anim.ResetTrigger("hit");
