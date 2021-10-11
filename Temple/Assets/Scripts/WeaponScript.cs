@@ -12,7 +12,7 @@ public class WeaponScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        hitSpray = contactFlash.GetComponentInChildren<ParticleSystem>();
     }
 
     // Update is called once per frame

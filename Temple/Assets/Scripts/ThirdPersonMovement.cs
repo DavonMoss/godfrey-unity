@@ -33,6 +33,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public GameObject ctg_script_obj;
     private CinemachineTargetGroup targetGroup;
+    public Cinemachine.CinemachineFreeLook freeLookCam;
+    public Cinemachine.CinemachineVirtualCamera lockOnCam;
     private EnemyManager enemyManager;
     private Transform targetedEnemy;
 
@@ -57,9 +59,24 @@ public class ThirdPersonMovement : MonoBehaviour
     void Update()
     {
         lockOn();
+        switchCamLockOnMethod(targeting);
         applyGravity();
         move();
         activateDust();
+    }
+
+    private void switchCamLockOnMethod(bool t)
+    {
+        if (t)
+        {
+            lockOnCam.Priority = 1;
+            freeLookCam.Priority = 0;
+        }
+        else
+        {
+            freeLookCam.Priority = 1;
+            lockOnCam.Priority = 0;
+        }
     }
 
     // INPUT METHODS
@@ -82,7 +99,7 @@ public class ThirdPersonMovement : MonoBehaviour
             }
             else
             {
-                transform.rotation = Quaternion.Euler(0, angle, leanDegrees * -velocity.x);
+                transform.rotation = Quaternion.Euler(0, angle, 0/**, leanDegrees * -velocity.x**/);
             }
 
             moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
@@ -112,6 +129,7 @@ public class ThirdPersonMovement : MonoBehaviour
             teleport_hor_inner.Play();
             teleport_hor_outer.Play();
             teleport_billboard.Play();
+
             controller.Move(moveDir * blinkDist);
         }
     }
@@ -214,7 +232,7 @@ public class ThirdPersonMovement : MonoBehaviour
                 int minDistIdx = enemyDistances.IndexOf(enemyDistances.Min());
 
                 targetedEnemy = enemyManager.enemiesInSight[minDistIdx].transform;
-                targetGroup.AddMember(targetedEnemy, 1, 1);
+                targetGroup.AddMember(targetedEnemy, 1, 5);
                 targeting = true;
                 triggerLockOn = false;
                 applyLockOnUI(targetedEnemy.transform);

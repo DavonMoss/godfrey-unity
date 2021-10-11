@@ -18,10 +18,13 @@ public class EnemyScript : MonoBehaviour
     public GameObject ctg_script_obj;
     private EnemyManager enemyManager;
 
+    public HealthBarScript healthbar;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
         currentHealth = maxHealth;
+        //healthbar.setStartHealth(maxHealth);
 
         playerPos = GameObject.FindGameObjectWithTag("Godfrey").transform;
 
@@ -49,10 +52,10 @@ public class EnemyScript : MonoBehaviour
 
     public void takeDamage(float dmg)
     {
-        Debug.Log("OUCHIE");
         anim.SetTrigger("hit");
         canMove = false;
         currentHealth -= dmg;
+        healthbar.changeHealth(-dmg/maxHealth);
     }
 
     public void hitStunReturn()
