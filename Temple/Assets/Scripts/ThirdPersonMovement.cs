@@ -7,16 +7,31 @@ using UnityEngine.InputSystem;
 
 public class ThirdPersonMovement : MonoBehaviour
 {
+    // Public Variables
+    [Header("Player Movement")]
     public CharacterController controller;
     public Animator anim;
-    public Transform cam;
+    public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime, blinkDist, baseGravity;
 
-    public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime;
-    public float nextAttackWindow, lastClickTime, numAttacks, blinkDist, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed, baseGravity, critMultiplier;
+    [Header("Camera Movement")]
+    public Transform cam;
+    public GameObject ctg_script_obj;
+    public Cinemachine.CinemachineFreeLook freeLookCam;
+    public Cinemachine.CinemachineVirtualCamera lockOnCam;
+
+    [Header("Player Combat")]
     public Transform attackPoint, groundPoundPoint;
     public LayerMask enemyLayers;
+    public GameObject targetUI;
     public int playerLayer, enemyLayerInt;
+    public float nextAttackWindow, lastClickTime, numAttacks, attackDamage, attackRange, groundPoundRange, lockOnDistance, groundPoundSpeed, critMultiplier;
 
+    [Header("Player Particle FX")]
+    public ParticleSystem slash_1, slash_crit;
+    public ParticleSystem teleport_hor_outer, teleport_hor_inner, teleport_billboard;
+    public ParticleSystem runningDust;
+
+    // Private Variables
     private float turnSmoothVelocity, angle;
     private Vector3 velocity, moveDir;
     private Vector3 y_movedir = Vector3.zero;
@@ -27,22 +42,14 @@ public class ThirdPersonMovement : MonoBehaviour
                     triggerLockOn = false,
                     inRecovery = false,
                     crit = false,
-                    attackActive = false;
+                    attackActive = false,
+                    jumped = false;
 
     private float gravity;
-
-    public GameObject ctg_script_obj;
     private CinemachineTargetGroup targetGroup;
-    public Cinemachine.CinemachineFreeLook freeLookCam;
-    public Cinemachine.CinemachineVirtualCamera lockOnCam;
     private EnemyManager enemyManager;
     private Transform targetedEnemy;
-
     private PlayerInput playerInput;
-    public ParticleSystem slash_1, slash_crit;
-    public ParticleSystem teleport_hor_outer, teleport_hor_inner, teleport_billboard;
-    public ParticleSystem runningDust;
-    public GameObject targetUI;
     private GameObject targetUIInstance;
 
     // Start is called before the first frame update
@@ -156,6 +163,7 @@ public class ThirdPersonMovement : MonoBehaviour
             !anim.GetBool("air_attack"))
         {
             anim.SetTrigger("jump");
+            jumped = true;
             y_movedir.y = jumpSpeed;
         }
     }
@@ -174,13 +182,12 @@ public class ThirdPersonMovement : MonoBehaviour
 
             if (numAttacks == 1)
             {
-                moveEnabled = false;
-
                 if (anim.GetBool("grounded"))
                 {
+                    moveEnabled = false;
                     anim.SetBool("attack1", true);
                 }
-                else
+                else if (!anim.GetBool("grounded") && jumped)
                 {
                     anim.SetBool("air_attack", true);
                     gravity = groundPoundSpeed;
@@ -199,6 +206,12 @@ public class ThirdPersonMovement : MonoBehaviour
     }
 
     // HELPER METHODS
+    public void endJump()
+    {
+        jumped = false;
+        disableMovement();
+    }
+
     private void activateDust()
     {
         if (anim.GetBool("run") == true &&
@@ -285,7 +298,7 @@ public class ThirdPersonMovement : MonoBehaviour
     private void applyGravity()
     {
         y_movedir.y -= gravity * Time.deltaTime;
-
+        
         if (!controller.isGrounded)
         {
             anim.SetBool("grounded", false);
@@ -293,6 +306,7 @@ public class ThirdPersonMovement : MonoBehaviour
         }
         else
         {
+            y_movedir.y = Mathf.Clamp(y_movedir.y, 0, jumpSpeed);
             anim.SetBool("grounded", true);
             Physics.IgnoreLayerCollision(playerLayer, enemyLayerInt, false);
         }
@@ -434,6 +448,7 @@ public class ThirdPersonMovement : MonoBehaviour
         inRecovery = false;
         crit = false;
         attackActive = false;
+        jumped = false;
 
         // resetting anim fields
         anim.ResetTrigger("hit");
