@@ -95,6 +95,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
         if (velocity.magnitude >= 0.1f)
         {
+            // ROTATION CODE
             float targetAngle = Mathf.Atan2(velocity.x, velocity.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
             angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
 
@@ -109,6 +110,7 @@ public class ThirdPersonMovement : MonoBehaviour
                 transform.rotation = Quaternion.Euler(0, angle, 0/**, leanDegrees * -velocity.x**/);
             }
 
+            // MOVEMENT CODE
             moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             Vector3 xz_movedir = moveDir.normalized * speed * Time.deltaTime;
             xz_movedir.y += constantDownwardForce * Time.deltaTime;
@@ -116,7 +118,31 @@ public class ThirdPersonMovement : MonoBehaviour
             if (moveEnabled)
             {
                 controller.Move(xz_movedir);
-                anim.SetBool("run", true);
+
+                if (targeting)
+                {
+                    if (velocity.z <= 0 && velocity.x >= 0.1)
+                    {
+                        Debug.Log("Trying to strafe");
+                        anim.SetBool("run", false);
+                        anim.SetBool("strafe", true);
+                        anim.SetFloat("horizontal_vel", velocity.x);
+                        anim.SetFloat("vertical_vel", velocity.z);
+                    }
+                    else
+                    {
+                        Debug.Log("Should be running from strafe logic");
+                        anim.SetBool("strafe", false);
+                        anim.SetBool("run", true);
+                    }
+                }
+                else
+                {
+                    Debug.Log("Skipping strafe logic");
+                    anim.SetBool("strafe", false);
+                    anim.SetBool("run", true);
+
+                }
             }
         }
         else
