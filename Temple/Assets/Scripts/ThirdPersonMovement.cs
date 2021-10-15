@@ -12,7 +12,6 @@ public class ThirdPersonMovement : MonoBehaviour
     public CharacterController controller;
     public Animator anim;
     public float speed, jumpSpeed, constantDownwardForce, leanDegrees, turnSmoothTime, blinkDist, baseGravity;
-
     [Header("Camera Movement")]
     public Transform cam;
     public GameObject ctg_script_obj;
