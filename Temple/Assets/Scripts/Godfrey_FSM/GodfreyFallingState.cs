@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class GodfreyJumpingState : GodfreyAbstractState
+public class GodfreyFallingState : GodfreyAbstractState
 {
     GodfreyStateManager godfrey;
     Vector3 velocity, moveDir, xz_movedir, y_movedir;
@@ -11,7 +11,6 @@ public class GodfreyJumpingState : GodfreyAbstractState
 
     public override void ReceiveInput(InputAction.CallbackContext value)
     {
-        throw new System.NotImplementedException();
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
@@ -26,16 +25,14 @@ public class GodfreyJumpingState : GodfreyAbstractState
         targetAngle = 0;
         turnSmoothVelocity = 0;
 
-        y_movedir.y = godfrey.jumpSpeed;
-
-        godfrey.SwitchAnimState(godfrey.JUMP_ANIM);
+        godfrey.SwitchAnimState(godfrey.FALL_ANIM);
     }
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
-        if (y_movedir.y <= 0)
+        if (godfrey.controller.isGrounded)
         {
-            godfrey.SwitchState(godfrey.FallingState);
+            godfrey.SwitchState(godfrey.IdleState);
         }
 
         float horizontal = Input.GetAxisRaw("Horizontal");
@@ -70,6 +67,6 @@ public class GodfreyJumpingState : GodfreyAbstractState
     private void applyGravity()
     {
         y_movedir.y -= godfrey.baseGravity * Time.deltaTime;
-        godfrey.controller.Move(y_movedir * Time.deltaTime);
+        godfrey.controller.Move(y_movedir * godfrey.fallSpeedMult * Time.deltaTime);
     }
 }

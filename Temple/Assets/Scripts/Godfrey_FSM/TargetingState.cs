@@ -67,10 +67,11 @@ public class TargetingState : GodfreyAbstractState
     {
         if (triggerLockOn)
         {
-            int minDistIdx = enemyDistances.IndexOf(enemyDistances.Min());
+            float minDist = enemyDistances.Min();
+            int minDistIdx = enemyDistances.IndexOf(minDist);
 
             targetedEnemy = enemyManager.enemiesInSight[minDistIdx].transform;
-            targetGroup.AddMember(targetedEnemy, 1, 5);
+            targetGroup.AddMember(targetedEnemy, 1, 4);
             targeting = true;
             triggerLockOn = false;
             applyLockOnUI(godfrey, targetedEnemy.transform);

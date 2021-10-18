@@ -5,15 +5,27 @@ using UnityEngine.InputSystem;
 
 public class GodfreyStrafingState : GodfreyAbstractState
 {
+    GodfreyStateManager godfrey;
     Vector3 velocity, moveDir, xz_movedir;
     float angle, targetAngle, turnSmoothVelocity;
 
     public override void ReceiveInput(InputAction.CallbackContext value)
     {
+        if (value.action.name == "Jump")
+        {
+            godfrey.SwitchState(godfrey.JumpingState);
+        }
+
+        if (value.action.name == "MeleeAttack")
+        {
+            godfrey.SwitchState(godfrey.AttackState_1);
+        }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
     {
+        this.godfrey = godfrey;
+
         velocity = Vector3.zero;
         moveDir = Vector3.zero;
         xz_movedir = Vector3.zero;
@@ -21,11 +33,16 @@ public class GodfreyStrafingState : GodfreyAbstractState
         targetAngle = 0;
         turnSmoothVelocity = 0;
 
-        godfrey.SwitchAnimState(godfrey.animStates[2]);
+        godfrey.SwitchAnimState(godfrey.STRAFE_ANIM);
     }
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
+        if (!godfrey.controller.isGrounded)
+        {
+            godfrey.SwitchState(godfrey.FallingState);
+        }
+
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
         velocity = new Vector3(horizontal, 0, vertical).normalized;
@@ -40,8 +57,8 @@ public class GodfreyStrafingState : GodfreyAbstractState
 
             godfrey.anim.SetFloat("horizontal_vel", velocity.x);
             godfrey.anim.SetFloat("vertical_vel", velocity.z);
-            updateRotation(godfrey);
-            updateMovement(godfrey);
+            updateRotation();
+            updateMovement();
         }
         else
         {
@@ -51,7 +68,7 @@ public class GodfreyStrafingState : GodfreyAbstractState
         }
     }
 
-    private void updateRotation(GodfreyStateManager godfrey)
+    private void updateRotation()
     {
         targetAngle = Mathf.Atan2(velocity.x, velocity.z) * Mathf.Rad2Deg + godfrey.cam.eulerAngles.y;
         angle = Mathf.SmoothDampAngle(godfrey.transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, godfrey.turnSmoothTime);
@@ -61,11 +78,11 @@ public class GodfreyStrafingState : GodfreyAbstractState
         godfrey.transform.rotation = Quaternion.LookRotation(lookDir);
     }
 
-    private void updateMovement(GodfreyStateManager godfrey)
+    private void updateMovement()
     {
         moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
         xz_movedir = moveDir.normalized * godfrey.speed * Time.deltaTime;
-        xz_movedir.y += godfrey.constantDownwardForce * Time.deltaTime;
+        xz_movedir.y -= godfrey.baseGravity * Time.deltaTime;
 
         godfrey.controller.Move(xz_movedir);
     }

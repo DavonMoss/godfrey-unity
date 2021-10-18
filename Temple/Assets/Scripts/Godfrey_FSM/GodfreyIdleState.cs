@@ -5,23 +5,36 @@ using UnityEngine.InputSystem;
 
 public class GodfreyIdleState : GodfreyAbstractState
 {
+    GodfreyStateManager godfrey;
+
     public override void ReceiveInput(InputAction.CallbackContext value)
     {
+        // Switch to Jump
+        if (value.action.name == "Jump")
+        {
+            godfrey.SwitchState(godfrey.JumpingState);
+        }
+
+        if (value.action.name == "MeleeAttack")
+        {
+            godfrey.SwitchState(godfrey.AttackState_1);
+        }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
     {
-        godfrey.SwitchAnimState(godfrey.animStates[0]);
+        this.godfrey = godfrey;
+        godfrey.SwitchAnimState(godfrey.IDLE_ANIM);
     }
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
-        checkSwitches(godfrey);
+        checkSwitches();
     }
 
-    public void checkSwitches(GodfreyStateManager godfrey)
+    public void checkSwitches()
     {
-        // Switch to freelook motion.
+        // Switch to freelook or strafing motion.
         if (godfrey.isInputAxisActive())
         {
             if (godfrey.isTargeting())
@@ -32,6 +45,6 @@ public class GodfreyIdleState : GodfreyAbstractState
             {
                 godfrey.SwitchState(godfrey.FLMovingState);
             }
-        } 
+        }
     }
 }

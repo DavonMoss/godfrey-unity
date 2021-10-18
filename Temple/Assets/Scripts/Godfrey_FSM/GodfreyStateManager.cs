@@ -24,13 +24,19 @@ public class GodfreyStateManager : MonoBehaviour
     [Header("Movement Variables")]
     public float speed;
     public float jumpSpeed;
-    public float constantDownwardForce;
+    public float fallSpeedMult;
     public float turnSmoothTime;
     public float blinkDist;
     public float baseGravity;
 
     [Header("Combat Variables")]
     public float lockOnDistance;
+    public float attackDamage;
+    public float critMultiplier;
+
+    [Header("Player Particle FX")]
+    public ParticleSystem slash;
+    public ParticleSystem slash_crit;
 
     [Header("Camera Variables")]
     public Transform cam;
@@ -43,13 +49,19 @@ public class GodfreyStateManager : MonoBehaviour
 
     GodfreyAbstractState currentState;
     GodfreyAbstractState targetingState = new TargetingState();
-    private bool targeting;
+    private bool targeting = false;
+    private bool crit = false;
+    private bool attackActive = false;
     private Transform targetedEnemy = null;
 
     [Header("Player States")]
     public GodfreyIdleState IdleState = new GodfreyIdleState();
     public GodfreyFreelookMovingState FLMovingState = new GodfreyFreelookMovingState();
     public GodfreyStrafingState StrafingState = new GodfreyStrafingState();
+    public GodfreyJumpingState JumpingState = new GodfreyJumpingState();
+    public GodfreyFallingState FallingState = new GodfreyFallingState();
+    public GodfreyAttackState_1 AttackState_1 = new GodfreyAttackState_1();
+    public GodfreyAttackState_2 AttackState_2 = new GodfreyAttackState_2();
 
     //
     // Animator State Constants
@@ -57,12 +69,15 @@ public class GodfreyStateManager : MonoBehaviour
 
     string currentAnimState;
 
-    public string[] animStates = new string[]
-    {
-        "idle",     // 0
-        "run",      // 1
-        "strafe"    // 2
-    };
+    [System.NonSerialized] public string IDLE_ANIM = "idle";
+    [System.NonSerialized] public string RUN_ANIM = "run";
+    [System.NonSerialized] public string STRAFE_ANIM = "strafe";
+    [System.NonSerialized] public string JUMP_ANIM = "jump";
+    [System.NonSerialized] public string FALL_ANIM = "falling";
+    [System.NonSerialized] public string ATK1_ANIM = "attack1";
+    [System.NonSerialized] public string ATK1_RCVRY_ANIM = "attack1_recovery";
+    [System.NonSerialized] public string ATK2_ANIM = "attack2";
+    [System.NonSerialized] public string ATK2_RCVRY_ANIM = "attack2_recovery";
 
     // Start is called before the first frame update
     void Start()
@@ -87,6 +102,7 @@ public class GodfreyStateManager : MonoBehaviour
     public void SwitchState(GodfreyAbstractState state)
     {
         currentState = state;
+        Debug.LogFormat("Switching to {0}", currentState);
         state.EnterState(this);
     }
 
@@ -97,20 +113,54 @@ public class GodfreyStateManager : MonoBehaviour
         currentAnimState = newState;
         anim.Play(currentAnimState);
     }
-    
+
+    public void attackHit(Collider enemy)
+    {
+        if (enemy != null && attackActive)
+        {
+            float dmg = attackDamage;
+
+            if (crit)
+                dmg *= critMultiplier;
+
+            enemy.GetComponent<EnemyScript>().takeDamage(dmg);
+        }
+    }
+
+    //
+    // INPUT SYSTEM CALLBACKS
+    //
+
+    public void input_toggletarget(InputAction.CallbackContext value)
+    {
+        targetingState.ReceiveInput(value);
+    }
+
+    public void PassInput(InputAction.CallbackContext value)
+    {
+        if (value.started)
+        {
+            currentState.ReceiveInput(value);
+        }
+    }
+
+    //
+    // GETTERS AND SETTERS
+    //
+
     public bool isInputAxisActive()
     {
         return Mathf.Abs(Input.GetAxisRaw("Horizontal") + Input.GetAxisRaw("Vertical")) > 0;
     }
 
-    public bool isTargeting()
-    {
-        return targeting;
-    }
-
     public Transform getTargetedEnemy()
     {
         return targetedEnemy;
+    }
+
+    public bool isTargeting()
+    {
+        return targeting;
     }
 
     public void setTargeting(bool t, Transform te)
@@ -119,12 +169,23 @@ public class GodfreyStateManager : MonoBehaviour
         targetedEnemy = te;
     }
 
-    //
-    //  INPUT LISTENERS FOR EACH ACTION
-    //
-
-    public void input_targetToggle(InputAction.CallbackContext value)
+    public bool isCrit()
     {
-        targetingState.ReceiveInput(value);
+        return crit;
+    }
+
+    public void setCrit(bool b)
+    {
+        crit = b;
+    }
+
+    public bool isAttackActive()
+    {
+        return attackActive;
+    }
+
+    public void setAttackActive(bool b)
+    {
+        attackActive = b;
     }
 }

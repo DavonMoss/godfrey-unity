@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class WeaponScript : MonoBehaviour
 {
+    public GodfreyStateManager godfrey;
+
     public string enemyTag;
-    public GameObject weaponOwner;
     public GameObject contactFlash;
     public ParticleSystem hitSpray;
 
@@ -26,7 +27,7 @@ public class WeaponScript : MonoBehaviour
         if (other.gameObject.CompareTag(enemyTag))
         {
             //Debug.LogFormat("I have hit {0}!", other.ToString());
-            weaponOwner.GetComponent<ThirdPersonMovement>().attackHit(other);
+            godfrey.attackHit(other);
 
             contactFlash.transform.position = other.ClosestPoint(transform.position);
             hitSpray.Play();
