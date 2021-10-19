@@ -55,6 +55,7 @@ public class GodfreyAttackState_2 : GodfreyAbstractState
             {
                 godfrey.setAttackActive(false);
                 godfrey.setCrit(false);
+                godfrey.setCritRegen(false);
                 godfrey.SwitchState(godfrey.IdleState);
             }
         }

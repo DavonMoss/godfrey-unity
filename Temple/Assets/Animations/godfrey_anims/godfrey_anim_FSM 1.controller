@@ -262,7 +262,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: strafe
-  m_Speed: 1
+  m_Speed: 2.15
   m_CycleOffset: 0
   m_Transitions: []
   m_StateMachineBehaviours: []
@@ -912,7 +912,7 @@ BlendTree:
   m_Name: Blend Tree
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 2f69911feb453430fb3c5cf44d562299, type: 2}
+    m_Motion: {fileID: 7400000, guid: faf576f55771b4487beba8b2b59c33cc, type: 2}
     m_Threshold: 0
     m_Position: {x: -1, y: 1}
     m_TimeScale: 1
@@ -920,7 +920,7 @@ BlendTree:
     m_DirectBlendParameter: attack_speed
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: faf576f55771b4487beba8b2b59c33cc, type: 2}
+    m_Motion: {fileID: 7400000, guid: 2f69911feb453430fb3c5cf44d562299, type: 2}
     m_Threshold: 0.22222224
     m_Position: {x: 1, y: 1}
     m_TimeScale: 1

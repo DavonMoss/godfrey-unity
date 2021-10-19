@@ -20,11 +20,13 @@ public class GodfreyStateManager : MonoBehaviour
 
     [Header("UI Objects")]
     public GameObject targetUI;
+    public MeterScript meterBar;
 
     [Header("Movement Variables")]
     public float speed;
     public float jumpSpeed;
     public float fallSpeedMult;
+    public float strafeMult;
     public float turnSmoothTime;
     public float blinkDist;
     public float baseGravity;
@@ -33,6 +35,10 @@ public class GodfreyStateManager : MonoBehaviour
     public float lockOnDistance;
     public float attackDamage;
     public float critMultiplier;
+    public float meter;
+    public float meterBlinkCost;
+    public float meterRegen;
+    public float meterCritRegen;
 
     [Header("Player Particle FX")]
     public ParticleSystem slash;
@@ -49,8 +55,11 @@ public class GodfreyStateManager : MonoBehaviour
 
     GodfreyAbstractState currentState;
     GodfreyAbstractState targetingState = new TargetingState();
+    private float currentSpeed;
+    private float currentMeter;
     private bool targeting = false;
     private bool crit = false;
+    private bool canCritRegen = false;
     private bool attackActive = false;
     private Transform targetedEnemy = null;
 
@@ -83,7 +92,11 @@ public class GodfreyStateManager : MonoBehaviour
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+
+        currentSpeed = speed;
+        currentMeter = meter;
         currentState = IdleState;
+
         currentState.EnterState(this);
         targetingState.EnterState(this);
     }
@@ -93,6 +106,8 @@ public class GodfreyStateManager : MonoBehaviour
     {
         targetingState.UpdateState(this);
         currentState.UpdateState(this);
+
+        updateMeterBar();
     }
 
     //
@@ -125,6 +140,11 @@ public class GodfreyStateManager : MonoBehaviour
 
             enemy.GetComponent<EnemyScript>().takeDamage(dmg);
         }
+    }
+
+    public void updateMeterBar()
+    {
+        meterBar.setMeter(currentMeter/meter);
     }
 
     //
@@ -179,6 +199,16 @@ public class GodfreyStateManager : MonoBehaviour
         crit = b;
     }
 
+    public bool isCritRegen()
+    {
+        return canCritRegen;
+    }
+
+    public void setCritRegen(bool b)
+    {
+        canCritRegen = b;
+    }
+
     public bool isAttackActive()
     {
         return attackActive;
@@ -187,5 +217,38 @@ public class GodfreyStateManager : MonoBehaviour
     public void setAttackActive(bool b)
     {
         attackActive = b;
+    }
+
+    public float getCurrentSpeed()
+    {
+        return currentSpeed;
+    }
+
+    public void setCurrentSpeed(float s)
+    {
+        currentSpeed = s;
+    }
+
+    public float getCurrentMeter()
+    {
+        return currentMeter;
+    }
+
+    public void setCurrentMeter(float m)
+    {
+        currentMeter = m;
+        currentMeter = Mathf.Clamp(currentMeter, 0, 1);
+    }
+
+    public void changeMeter(float amt)
+    {
+        float adjustedAmt = amt;
+
+        if (currentMeter + amt >= meter)
+        {
+            adjustedAmt = meter - currentMeter;
+        }
+
+        currentMeter += adjustedAmt;
     }
 }

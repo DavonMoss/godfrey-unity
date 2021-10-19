@@ -33,6 +33,8 @@ public class GodfreyJumpingState : GodfreyAbstractState
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
+        regenMeter();
+
         if (y_movedir.y <= 0)
         {
             godfrey.SwitchState(godfrey.FallingState);
@@ -71,5 +73,13 @@ public class GodfreyJumpingState : GodfreyAbstractState
     {
         y_movedir.y -= godfrey.baseGravity * Time.deltaTime;
         godfrey.controller.Move(y_movedir * Time.deltaTime);
+    }
+
+    private void regenMeter()
+    {
+        if (godfrey.getCurrentMeter() < godfrey.meter)
+        {
+            godfrey.changeMeter(godfrey.meterRegen);
+        }
     }
 }

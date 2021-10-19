@@ -29,6 +29,12 @@ public class WeaponScript : MonoBehaviour
             //Debug.LogFormat("I have hit {0}!", other.ToString());
             godfrey.attackHit(other);
 
+            if (godfrey.isCritRegen())
+            {
+                godfrey.changeMeter(godfrey.meterCritRegen);
+                godfrey.setCritRegen(false);
+            }
+
             contactFlash.transform.position = other.ClosestPoint(transform.position);
             hitSpray.Play();
         }

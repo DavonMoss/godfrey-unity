@@ -20,6 +20,15 @@ public class GodfreyFreelookMovingState : GodfreyAbstractState
         {
             godfrey.SwitchState(godfrey.AttackState_1);
         }
+
+        if (value.action.name == "Blink")
+        {
+            if (godfrey.getCurrentMeter() >= godfrey.meterBlinkCost)
+            {
+                godfrey.changeMeter(-godfrey.meterBlinkCost);
+                godfrey.controller.Move(moveDir.normalized * godfrey.blinkDist);
+            }
+        }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
@@ -38,6 +47,8 @@ public class GodfreyFreelookMovingState : GodfreyAbstractState
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
+        regenMeter();
+
         if (!godfrey.controller.isGrounded)
         {
             godfrey.SwitchState(godfrey.FallingState);
@@ -77,9 +88,17 @@ public class GodfreyFreelookMovingState : GodfreyAbstractState
     private void updateMovement()
     {
         moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-        xz_movedir = moveDir.normalized * godfrey.speed * Time.deltaTime;
+        xz_movedir = moveDir.normalized * godfrey.getCurrentSpeed() * Time.deltaTime;
         xz_movedir.y -= godfrey.baseGravity * Time.deltaTime;
 
         godfrey.controller.Move(xz_movedir);
+    }
+
+    private void regenMeter()
+    {
+        if (godfrey.getCurrentMeter() < godfrey.meter)
+        {
+            godfrey.changeMeter(godfrey.meterRegen * 2);
+        }
     }
 }

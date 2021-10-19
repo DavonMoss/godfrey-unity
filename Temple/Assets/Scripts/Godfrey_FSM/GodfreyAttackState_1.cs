@@ -24,6 +24,7 @@ public class GodfreyAttackState_1 : GodfreyAbstractState
             {
                 attackQueued = true;
                 godfrey.setCrit(true);
+                godfrey.setCritRegen(true);
             }
         } 
     }
