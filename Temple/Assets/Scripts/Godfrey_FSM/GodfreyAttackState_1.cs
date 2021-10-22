@@ -26,7 +26,15 @@ public class GodfreyAttackState_1 : GodfreyAbstractState
                 godfrey.setCrit(true);
                 godfrey.setCritRegen(true);
             }
-        } 
+        }
+
+        if (value.action.name == "Blink")
+        {
+            if (currentAnimState.IsName(godfrey.ATK1_RCVRY_ANIM) && godfrey.isFreshKill())
+            {
+                godfrey.controller.Move(godfrey.getTargetedEnemy().transform.position - godfrey.transform.position);
+            }
+        }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
@@ -65,6 +73,7 @@ public class GodfreyAttackState_1 : GodfreyAbstractState
             if (Time.time - animStart >= atkDuration + recoveryDuration)
             {
                 godfrey.setAttackActive(false);
+                godfrey.setFreshKill(false);
                 godfrey.SwitchState(godfrey.IdleState);
             }
         }

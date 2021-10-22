@@ -7,6 +7,8 @@ using System.Linq;
 
 public class TargetingState : GodfreyAbstractState
 {
+    GodfreyStateManager godfrey;
+
     EnemyManager enemyManager;
     List<float> enemyDistances;
     float enemyDistance;
@@ -14,21 +16,35 @@ public class TargetingState : GodfreyAbstractState
     Transform targetedEnemy;
     CinemachineTargetGroup targetGroup;
     GameObject targetUIInstance;
+    int currentEnemyIdx = 0;
 
     public override void ReceiveInput(InputAction.CallbackContext value)
     {
-        if (value.started)
+        if (value.action.name == "LockOn")
         {
-            triggerLockOn = true;
+            if (value.started)
+            {
+                triggerLockOn = true;
+            }
+            else if (value.canceled)
+            {
+                triggerLockOn = false;
+            }
         }
-        else if (value.canceled)
+
+        if (value.action.name == "LockOnCycle")
         {
-            triggerLockOn = false;
+            if (value.started)
+            {
+                cycleTargets();
+            }
         }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
     {
+        this.godfrey = godfrey;
+
         GameObject enemyManagerObj = GameObject.FindGameObjectWithTag("EnemyManager");
         enemyManager = enemyManagerObj.GetComponent<EnemyManager>();
         targetGroup = enemyManagerObj.GetComponent<CinemachineTargetGroup>();
@@ -37,54 +53,42 @@ public class TargetingState : GodfreyAbstractState
 
     public override void UpdateState(GodfreyStateManager godfrey)
     {
+        sortEnemies();
+
         // If we are targeting...
         if (targeting)
         {
-            checkRemoveLockOn(godfrey);
+            checkRemoveLockOn();
         }
         else if (!targeting && enemyManager.enemiesInSight.Count > 0)
         {
-            calcEnemyDistances(godfrey);
-            checkLockOn(godfrey);
+            checkLockOn(triggerLockOn, 0);
         }
 
         godfrey.setTargeting(targeting, targetedEnemy);
-        switchCamLockOnMethod(godfrey, targeting);
+        switchCamLockOnMethod(targeting);
     }
 
-    private void calcEnemyDistances(GodfreyStateManager godfrey)
+    private void checkLockOn(bool b, int i)
     {
-        enemyDistances = new List<float>();
-
-        foreach (GameObject enemy in enemyManager.enemiesInSight)
+        if (b)
         {
-            Vector3 distCoords = godfrey.transform.position - enemy.transform.position;
-            enemyDistances.Add(Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2)));
-        }
-    }
-
-    private void checkLockOn(GodfreyStateManager godfrey)
-    {
-        if (triggerLockOn)
-        {
-            float minDist = enemyDistances.Min();
-            int minDistIdx = enemyDistances.IndexOf(minDist);
-
-            targetedEnemy = enemyManager.enemiesInSight[minDistIdx].transform;
+            targetedEnemy = enemyManager.enemiesInSight[i].transform;
             targetGroup.AddMember(targetedEnemy, 1, 4);
             targeting = true;
             triggerLockOn = false;
-            applyLockOnUI(godfrey, targetedEnemy.transform);
-            return;
+            applyLockOnUI(targetedEnemy.transform);
         }
     }
 
-    private void checkRemoveLockOn(GodfreyStateManager godfrey)
+    private void checkRemoveLockOn()
     {
-        // If enemy dies, stop targeting.
+        // If enemy dies, stop targeting, and look for next enemy in queue.
         if (targetedEnemy == null)
         {
             targeting = false;
+
+            checkLockOn(true, 0);
         }
 
         // If we press target button again while targeting, stop targeting.
@@ -93,7 +97,8 @@ public class TargetingState : GodfreyAbstractState
             targetGroup.RemoveMember(targetedEnemy);
             targeting = false;
             triggerLockOn = false;
-            applyLockOnUI(godfrey, null);
+            applyLockOnUI(null);
+            currentEnemyIdx = 0;
             return;
         }
 
@@ -104,12 +109,13 @@ public class TargetingState : GodfreyAbstractState
         if (enemyDistance > godfrey.lockOnDistance)
         {
             targetGroup.RemoveMember(targetedEnemy);
-            applyLockOnUI(godfrey, null);
+            applyLockOnUI(null);
             targeting = false;
+            currentEnemyIdx = 0;
         }
     }
 
-    private void applyLockOnUI(GodfreyStateManager godfrey, Transform parent)
+    private void applyLockOnUI(Transform parent)
     {
         if (parent != null)
         {
@@ -122,7 +128,7 @@ public class TargetingState : GodfreyAbstractState
         }
     }
 
-    private void switchCamLockOnMethod(GodfreyStateManager godfrey, bool t)
+    private void switchCamLockOnMethod(bool t)
     {
         if (t)
         {
@@ -134,5 +140,40 @@ public class TargetingState : GodfreyAbstractState
             godfrey.freeLookCam.Priority = 1;
             godfrey.lockOnCam.Priority = 0;
         }
+    }
+
+    private void sortEnemies()
+    {
+        for (int i = 1; i < enemyManager.enemiesInSight.Count; i++)
+        {
+            Transform currentEnemyPos = enemyManager.enemiesInSight[i].transform;
+            int j = i - 1;
+
+            while (j >= 0 &&
+                (godfrey.transform.position - currentEnemyPos.position).magnitude <
+                (godfrey.transform.position - enemyManager.enemiesInSight[j].transform.position).magnitude)
+            {
+                enemyManager.enemiesInSight[j + 1] = enemyManager.enemiesInSight[j];
+                j--;
+            }
+
+            enemyManager.enemiesInSight[j + 1] = currentEnemyPos.gameObject;
+        }
+    }
+
+    private void cycleTargets()
+    {
+        if (currentEnemyIdx < enemyManager.enemiesInSight.Count - 1)
+        {
+            currentEnemyIdx++;
+        }
+        else
+        {
+            currentEnemyIdx = 0;
+        }
+
+        targetGroup.RemoveMember(targetedEnemy);
+        applyLockOnUI(null);
+        checkLockOn(true, currentEnemyIdx);
     }
 }

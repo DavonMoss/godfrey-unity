@@ -20,9 +20,13 @@ public class EnemyScript : MonoBehaviour
 
     public HealthBarScript healthbar;
 
+    GodfreyStateManager godfrey;
+
     // Start is called before the first frame update
     protected virtual void Start()
     {
+        godfrey = GameObject.FindGameObjectWithTag("Godfrey").GetComponent<GodfreyStateManager>();
+
         currentHealth = maxHealth;
         //healthbar.setStartHealth(maxHealth);
 
@@ -66,7 +70,8 @@ public class EnemyScript : MonoBehaviour
     protected virtual void kill()
     {
         if (currentHealth <= 0)
-        { 
+        {
+            godfrey.setFreshKill(true);
             GameObject.Destroy(gameObject);
         }
     }

@@ -59,6 +59,7 @@ public class GodfreyStateManager : MonoBehaviour
     private float currentMeter;
     private bool targeting = false;
     private bool crit = false;
+    private bool freshKill = false;
     private bool canCritRegen = false;
     private bool attackActive = false;
     private Transform targetedEnemy = null;
@@ -197,6 +198,25 @@ public class GodfreyStateManager : MonoBehaviour
     public void setCrit(bool b)
     {
         crit = b;
+    }
+
+    public bool isFreshKill()
+    {
+        return freshKill;
+    }
+
+    public void setFreshKill(bool b)
+    {
+        freshKill = b;
+
+        if (b)
+        {
+            Time.timeScale = 0.5f;
+        }
+        else
+        {
+            Time.timeScale = 1;
+        }
     }
 
     public bool isCritRegen()

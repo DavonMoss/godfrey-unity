@@ -11,6 +11,13 @@ public class GodfreyAttackState_2 : GodfreyAbstractState
 
     public override void ReceiveInput(InputAction.CallbackContext value)
     {
+        if (value.action.name == "Blink")
+        {
+            if (currentAnimState.IsName(godfrey.ATK2_RCVRY_ANIM) && godfrey.isFreshKill())
+            {
+                godfrey.controller.Move(godfrey.getTargetedEnemy().transform.position - godfrey.transform.position);
+            }
+        }
     }
 
     public override void EnterState(GodfreyStateManager godfrey)
@@ -55,6 +62,7 @@ public class GodfreyAttackState_2 : GodfreyAbstractState
             {
                 godfrey.setAttackActive(false);
                 godfrey.setCrit(false);
+                godfrey.setFreshKill(false);
                 godfrey.setCritRegen(false);
                 godfrey.SwitchState(godfrey.IdleState);
             }
