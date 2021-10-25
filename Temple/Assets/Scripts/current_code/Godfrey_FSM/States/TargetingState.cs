@@ -71,7 +71,7 @@ public class TargetingState : GodfreyAbstractState
 
     private void checkLockOn(bool b, int i)
     {
-        if (b)
+        if (b && enemyManager.enemiesInSight.Count > 0)
         {
             targetedEnemy = enemyManager.enemiesInSight[i].transform;
             targetGroup.AddMember(targetedEnemy, 1, 4);
@@ -103,15 +103,18 @@ public class TargetingState : GodfreyAbstractState
         }
 
         // If we move too far away from the enemy, stop targeting.
-        Vector3 distCoords = godfrey.transform.position - targetedEnemy.position;
-        enemyDistance = Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2));
-
-        if (enemyDistance > godfrey.lockOnDistance)
+        if (targetedEnemy != null)
         {
-            targetGroup.RemoveMember(targetedEnemy);
-            applyLockOnUI(null);
-            targeting = false;
-            currentEnemyIdx = 0;
+            Vector3 distCoords = godfrey.transform.position - targetedEnemy.position;
+            enemyDistance = Mathf.Sqrt(Mathf.Pow(distCoords.x, 2) + Mathf.Pow(distCoords.y, 2));
+
+            if (enemyDistance > godfrey.lockOnDistance)
+            {
+                targetGroup.RemoveMember(targetedEnemy);
+                applyLockOnUI(null);
+                targeting = false;
+                currentEnemyIdx = 0;
+            }
         }
     }
 

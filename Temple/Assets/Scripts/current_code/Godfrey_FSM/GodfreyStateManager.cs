@@ -118,7 +118,7 @@ public class GodfreyStateManager : MonoBehaviour
     public void SwitchState(GodfreyAbstractState state)
     {
         currentState = state;
-        Debug.LogFormat("Switching to {0}", currentState);
+        //Debug.LogFormat("Switching to {0}", currentState);
         state.EnterState(this);
     }
 
@@ -139,7 +139,7 @@ public class GodfreyStateManager : MonoBehaviour
             if (crit)
                 dmg *= critMultiplier;
 
-            enemy.GetComponent<EnemyScript>().takeDamage(dmg);
+            enemy.GetComponent<EnemyStateManager>().takeDamage(dmg);
         }
     }
 
@@ -208,15 +208,6 @@ public class GodfreyStateManager : MonoBehaviour
     public void setFreshKill(bool b)
     {
         freshKill = b;
-
-        if (b)
-        {
-            Time.timeScale = 0.5f;
-        }
-        else
-        {
-            Time.timeScale = 1;
-        }
     }
 
     public bool isCritRegen()
