@@ -64,6 +64,12 @@ public class GodfreyStateManager : MonoBehaviour
     private bool attackActive = false;
     private Transform targetedEnemy = null;
 
+    //
+    // Projectile Tracking
+    //
+
+    public List<GameObject> incomingProjectiles = new List<GameObject>();
+
     [Header("Player States")]
     public GodfreyIdleState IdleState = new GodfreyIdleState();
     public GodfreyFreelookMovingState FLMovingState = new GodfreyFreelookMovingState();

@@ -13,9 +13,26 @@ public class GodfreyAttackState_2 : GodfreyAbstractState
     {
         if (value.action.name == "Blink")
         {
-            if (currentAnimState.IsName(godfrey.ATK2_RCVRY_ANIM) && godfrey.isFreshKill())
+            if (currentAnimState.IsName(godfrey.ATK2_RCVRY_ANIM) && godfrey.getCurrentMeter() >= godfrey.meterBlinkCost)
             {
-                godfrey.controller.Move(godfrey.getTargetedEnemy().transform.position - godfrey.transform.position);
+                foreach (GameObject p in godfrey.incomingProjectiles)
+                {
+                    if ((godfrey.transform.position - p.transform.position).magnitude <= p.GetComponent<TargetedProjectile>().maxDropDist)
+                    {
+                        p.GetComponent<TargetedProjectile>().lockedOn = false;
+                    }
+                }
+
+                godfrey.changeMeter(-godfrey.meterBlinkCost);
+
+                if (godfrey.isFreshKill())
+                {
+                    godfrey.controller.Move(godfrey.getTargetedEnemy().transform.position - godfrey.transform.position);
+                }
+                else
+                {
+                    godfrey.controller.Move((godfrey.transform.position - godfrey.getTargetedEnemy().transform.position) * godfrey.blinkDist);
+                }
             }
         }
     }
