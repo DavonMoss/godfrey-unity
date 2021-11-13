@@ -126,7 +126,7 @@
                     "id": "1fcdd276-3ecb-4a93-8b43-05650e6c25a3",
                     "path": "2DVector(mode=1)",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "ScaleVector2(x=0.5,y=0.5)",
                     "groups": "",
                     "action": "Look_xy",
                     "isComposite": true,

@@ -25,6 +25,8 @@ public class GodfreyStateManager : MonoBehaviour
     [Header("Movement Variables")]
     public float speed;
     public float jumpSpeed;
+    public float slideSpeed;
+    public float friction;
     public float fallSpeedMult;
     public float strafeMult;
     public float turnSmoothTime;
@@ -54,6 +56,7 @@ public class GodfreyStateManager : MonoBehaviour
     //
 
     GodfreyAbstractState currentState;
+    GodfreyAbstractState lastState;
     GodfreyAbstractState targetingState = new TargetingState();
     private float currentSpeed;
     private float currentMeter;
@@ -78,6 +81,7 @@ public class GodfreyStateManager : MonoBehaviour
     public GodfreyFallingState FallingState = new GodfreyFallingState();
     public GodfreyAttackState_1 AttackState_1 = new GodfreyAttackState_1();
     public GodfreyAttackState_2 AttackState_2 = new GodfreyAttackState_2();
+    public GodfreySlideState SlideState = new GodfreySlideState();
 
     //
     // Animator State Constants
@@ -103,6 +107,7 @@ public class GodfreyStateManager : MonoBehaviour
         currentSpeed = speed;
         currentMeter = meter;
         currentState = IdleState;
+        lastState = IdleState;
 
         currentState.EnterState(this);
         targetingState.EnterState(this);
@@ -123,6 +128,7 @@ public class GodfreyStateManager : MonoBehaviour
 
     public void SwitchState(GodfreyAbstractState state)
     {
+        lastState = currentState;
         currentState = state;
         //Debug.LogFormat("Switching to {0}", currentState);
         state.EnterState(this);
@@ -267,5 +273,10 @@ public class GodfreyStateManager : MonoBehaviour
         }
 
         currentMeter += adjustedAmt;
+    }
+
+    public GodfreyAbstractState getLastState()
+    {
+        return lastState;
     }
 }

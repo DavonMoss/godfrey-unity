@@ -133,16 +133,16 @@ public class TargetingState : GodfreyAbstractState
 
     private void switchCamLockOnMethod(bool t)
     {
-        if (t)
-        {
-            godfrey.lockOnCam.Priority = 1;
-            godfrey.freeLookCam.Priority = 0;
-        }
-        else
-        {
+        //if (t)
+        //{
+        //   godfrey.lockOnCam.Priority = 1;
+        //    godfrey.freeLookCam.Priority = 0;
+        //}
+        //else
+        //{
             godfrey.freeLookCam.Priority = 1;
             godfrey.lockOnCam.Priority = 0;
-        }
+        //}
     }
 
     private void sortEnemies()

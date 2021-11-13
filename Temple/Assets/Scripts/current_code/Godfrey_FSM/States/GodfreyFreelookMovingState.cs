@@ -23,19 +23,7 @@ public class GodfreyFreelookMovingState : GodfreyAbstractState
 
         if (value.action.name == "Blink")
         {
-            if (godfrey.getCurrentMeter() >= godfrey.meterBlinkCost)
-            {
-                foreach (GameObject p in godfrey.incomingProjectiles)
-                {
-                    if ((godfrey.transform.position - p.transform.position).magnitude <= p.GetComponent<TargetedProjectile>().maxDropDist)
-                    {
-                        p.GetComponent<TargetedProjectile>().lockedOn = false;
-                    }
-                }
-
-                godfrey.changeMeter(-godfrey.meterBlinkCost);
-                godfrey.controller.Move(moveDir.normalized * godfrey.blinkDist);
-            }
+            godfrey.SwitchState(godfrey.SlideState);
         }
     }
 
